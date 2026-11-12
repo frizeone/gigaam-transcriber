@@ -385,6 +385,8 @@ Makefile
 - `?token=` для SSE может попасть в access-логи сторонних прокси; сервис запускает uvicorn с `--no-access-log`, а `Referrer-Policy: no-referrer` не даёт утечь токену через referer.
 - Автоочистка по TTL удаляет результаты безвозвратно; для архива делайте `make backup`.
 
+Подробный прогон приёмки — в `VALIDATION.md`.
+
 ## Лицензии
 
 Код сервиса — MIT (см. `LICENSE`). GigaAM v3, onnx-asr, Silero VAD, ONNX Runtime, python-docx — MIT/BSD; атрибуция в `NOTICE`. Веса моделей не входят в образ по умолчанию и скачиваются с Hugging Face.
