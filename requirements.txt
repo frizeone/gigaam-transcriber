@@ -1,0 +1,16 @@
+# Runtime-зависимости образа. Версии зафиксированы.
+# onnxruntime-gpu 1.24.4 — последняя ветка ORT, собранная с CUDA 12.8 + cuDNN 9
+# (начиная с 1.27 PyPI-пакеты ORT собраны с CUDA 13 и не подходят к базе 12.8.1).
+fastapi==0.162.5
+uvicorn[standard]==0.54.0
+pydantic==2.14.3
+pydantic-settings==2.16.2
+python-multipart==0.0.33
+python-docx==1.2.0
+python-dotenv==1.2.4
+onnx-asr[hub]==0.12.0
+onnxruntime-gpu==1.24.4
+numpy==2.2.6
+huggingface-hub==2.4.0
+filelock==4.2.10
+nvidia-ml-py==13.615.71

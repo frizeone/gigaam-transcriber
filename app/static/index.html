@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="description" content="Локальная транскрибация русской речи GigaAM v3 E2E с экспортом в DOCX">
+  <title>GigaAM Transcriber — расшифровка речи в DOCX</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/app.css?v=0.1.3">
+</head>
+<body>
+  <div class="glow glow-one" aria-hidden="true"></div>
+  <div class="glow glow-two" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+          <path d="M12 3v18M7 6v12M17 6v12M3 10v4M21 10v4"/>
+        </svg>
+      </div>
+      <div>
+        <h1>GigaAM Transcriber</h1>
+        <p>Локальная расшифровка русской речи</p>
+      </div>
+    </div>
+    <div class="top-actions">
+      <button id="token-toggle" class="ghost small" type="button" aria-expanded="false" aria-controls="token-panel">Токен</button>
+      <span id="ready-badge" class="badge badge-neutral" role="status" aria-live="polite">Проверка модели…</span>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="hero">
+      <div>
+        <p class="eyebrow">GigaAM v3 E2E · ONNX Runtime · DOCX</p>
+        <h2>Видео или аудио —<br>в готовый текст</h2>
+        <p class="hero-text">Загрузите запись до 3 часов. Сервис извлечёт аудио, найдёт речь, распознает её и соберёт аккуратный документ Word. Файлы не покидают ваш сервер.</p>
+        <div class="hero-points">
+          <span>Полностью локально</span>
+          <span>Очередь и прогресс</span>
+          <span>Кириллица и таймкоды</span>
+        </div>
+      </div>
+    </section>
+
+    <section id="token-panel" class="card token-card" hidden>
+      <label for="token-input">Токен доступа</label>
+      <div class="token-row">
+        <input id="token-input" type="password" autocomplete="off" placeholder="Вставьте AUTH_TOKEN">
+        <button id="token-save" class="primary small" type="button">Сохранить</button>
+      </div>
+      <p class="hint">Токен хранится только в localStorage этого браузера.</p>
+    </section>
+
+    <section class="card upload-card" aria-labelledby="upload-title">
+      <h2 id="upload-title" class="visually-hidden">Загрузка файла</h2>
+      <div id="dropzone" class="dropzone" tabindex="0" role="button" aria-label="Выберите файл или перетащите его сюда">
+        <div class="drop-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5"/>
+            <path d="M4 15.5v2A2.5 2.5 0 0 0 6.5 20h11a2.5 2.5 0 0 0 2.5-2.5v-2"/>
+          </svg>
+        </div>
+        <p class="drop-title">Перетащите файл сюда</p>
+        <p class="drop-hint">или <span class="link">выберите на устройстве</span></p>
+        <p id="limits-hint" class="drop-meta">MP4, MKV, MOV, WAV, MP3 · до 2 ГБ · до 180 минут</p>
+        <input id="file-input" type="file" hidden>
+      </div>
+
+      <div id="file-preview" class="file-preview" hidden>
+        <div class="file-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/>
+            <path d="M14 3v5h5M9 13h6M9 17h4"/>
+          </svg>
+        </div>
+        <div class="file-info">
+          <strong id="file-name"></strong>
+          <span id="file-size"></span>
+        </div>
+        <button id="clear-file" class="ghost icon" type="button" aria-label="Убрать файл">×</button>
+      </div>
+
+      <div class="options">
+        <label class="check">
+          <input id="timestamps" type="checkbox">
+          <span class="check-box" aria-hidden="true"></span>
+          <span>Таймкоды в DOCX</span>
+        </label>
+        <label class="select-field">
+          <span>Модель</span>
+          <select id="model-select">
+            <option value="gigaam-v3-e2e-rnnt">RNNT — точнее</option>
+            <option value="gigaam-v3-e2e-ctc">CTC — быстрее</option>
+          </select>
+        </label>
+        <button id="submit" class="primary" type="button" disabled>Расшифровать</button>
+      </div>
+
+      <div id="upload-progress" class="progress-block" hidden role="status" aria-live="polite">
+        <div class="progress-head">
+          <span>Загрузка файла</span>
+          <span id="upload-percent">0%</span>
+        </div>
+        <div class="bar"><div id="upload-bar" class="bar-fill"></div></div>
+      </div>
+    </section>
+
+    <section id="job-section" class="card job-card" aria-labelledby="job-title" hidden>
+      <div class="job-head">
+        <div class="job-title-wrap">
+          <span id="job-status-badge" class="badge badge-neutral">В очереди</span>
+          <h2 id="job-title" class="job-title"></h2>
+        </div>
+        <button id="cancel-job" class="ghost small danger" type="button" hidden>Отменить</button>
+      </div>
+      <p id="job-stage" class="stage" role="status" aria-live="polite"></p>
+
+      <div class="progress-head">
+        <span id="job-progress-label">0%</span>
+        <span id="job-eta" class="muted"></span>
+      </div>
+      <div id="job-progressbar" class="bar large" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+        <div id="job-bar" class="bar-fill"></div>
+      </div>
+
+      <div id="job-result" class="result" hidden>
+        <div class="result-actions">
+          <a id="download-link" class="primary" href="#">Скачать DOCX</a>
+          <button id="new-job" class="ghost" type="button">Новая задача</button>
+        </div>
+        <div class="preview">
+          <h3>Фрагмент текста</h3>
+          <p id="job-preview"></p>
+        </div>
+      </div>
+
+      <div id="job-error" class="error-box" hidden role="alert">
+        <p id="job-error-text"></p>
+        <button id="retry" class="ghost small" type="button">Повторить</button>
+      </div>
+    </section>
+
+    <section class="card history-card" aria-labelledby="history-title">
+      <div class="section-head">
+        <h2 id="history-title">История задач</h2>
+        <button id="refresh-history" class="ghost small" type="button">Обновить</button>
+      </div>
+      <p id="history-empty" class="empty">Пока нет задач. Загрузите первый файл.</p>
+      <ul id="history-list" class="history-list"></ul>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span>GigaAM v3 E2E · onnx-asr · python-docx</span>
+    <span id="version"></span>
+  </footer>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  <script src="/app.js?v=0.1.3" defer></script>
+</body>
+</html>
