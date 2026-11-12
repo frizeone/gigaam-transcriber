@@ -1,0 +1,144 @@
+name: gigaam
+
+x-environment: &app-env
+  APP_VERSION: ${APP_VERSION:-0.1.0}
+  DATA_DIR: /data
+  HF_HOME: ${HF_HOME:-/models}
+  HF_HUB_OFFLINE: ${HF_HUB_OFFLINE:-0}
+  LOG_LEVEL: ${LOG_LEVEL:-info}
+  IMAGE_TAG: ${IMAGE_TAG:-latest}
+  GIT_SHA: ${GIT_SHA:-dev}
+  TZ: ${TZ:-Europe/Moscow}
+  ASR_MODEL: ${ASR_MODEL:-gigaam-v3-e2e-rnnt}
+  ASR_AVAILABLE_MODELS: ${ASR_AVAILABLE_MODELS:-gigaam-v3-e2e-rnnt,gigaam-v3-e2e-ctc}
+  ASR_DEVICE: ${ASR_DEVICE:-cpu}
+  ASR_QUANT: ${ASR_QUANT:-int8}
+  ASR_BATCH: ${ASR_BATCH:-8}
+  ASR_BACKEND: ${ASR_BACKEND:-onnx}
+  MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-2048}
+  MAX_DURATION_MIN: ${MAX_DURATION_MIN:-180}
+  QUEUE_MAX: ${QUEUE_MAX:-20}
+  RESULT_TTL_HOURS: ${RESULT_TTL_HOURS:-24}
+  DOCX_TIMESTAMPS: ${DOCX_TIMESTAMPS:-false}
+  AUTH_TOKEN: ${AUTH_TOKEN:-}
+  UPLOAD_RATE_LIMIT_PER_MIN: ${UPLOAD_RATE_LIMIT_PER_MIN:-5}
+  WORKER_STALE_SECONDS: ${WORKER_STALE_SECONDS:-90}
+  TRUST_PROXY: ${TRUST_PROXY:-false}
+  ENABLE_HSTS: ${ENABLE_HSTS:-false}
+  ALLOWED_HOSTS: ${ALLOWED_HOSTS:-*}
+  ASR_VAD_THRESHOLD: ${ASR_VAD_THRESHOLD:-0.5}
+  ASR_VAD_MIN_SPEECH_MS: ${ASR_VAD_MIN_SPEECH_MS:-250}
+  ASR_VAD_MAX_SPEECH_S: ${ASR_VAD_MAX_SPEECH_S:-20}
+  ASR_VAD_MIN_SILENCE_MS: ${ASR_VAD_MIN_SILENCE_MS:-300}
+  ASR_VAD_SPEECH_PAD_MS: ${ASR_VAD_SPEECH_PAD_MS:-100}
+  ASR_STREAM_CHUNK_S: ${ASR_STREAM_CHUNK_S:-60}
+
+x-app: &app
+  image: gigaam-transcriber:${IMAGE_TAG:-latest}
+  build:
+    context: .
+    target: runtime
+    args:
+      BASE_IMAGE: ${BASE_IMAGE:-nvidia/cuda:12.8.1-cudnn-runtime-ubuntu24.04}
+      GIT_SHA: ${GIT_SHA:-dev}
+      BUILD_DATE: ${BUILD_DATE:-unknown}
+      VERSION: ${APP_VERSION:-0.1.0}
+      PRELOAD_MODELS: ${PRELOAD_MODELS:-0}
+  restart: unless-stopped
+  stop_grace_period: 60s
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+  volumes:
+    - data:/data
+    - models:/models
+  environment: *app-env
+
+services:
+  web:
+    <<: *app
+    command:
+      - uvicorn
+      - app.main:app
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
+      - --no-server-header
+      - --no-access-log
+    ports:
+      - "${APP_BIND:-0.0.0.0}:${APP_PORT:-8000}:8000"
+    environment:
+      <<: *app-env
+      ASR_DEVICE: cpu
+      ASR_QUANT: int8
+    mem_limit: ${WEB_MEM_LIMIT:-512m}
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=3)"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  worker:
+    <<: *app
+    command: ["python", "-m", "app.worker"]
+    environment:
+      <<: *app-env
+      ASR_DEVICE: ${ASR_DEVICE:-cpu}
+      ASR_QUANT: ${ASR_QUANT:-int8}
+      NVIDIA_DRIVER_CAPABILITIES: compute,utility
+    depends_on:
+      web:
+        condition: service_healthy
+    mem_limit: ${WORKER_MEM_LIMIT:-6g}
+    healthcheck:
+      disable: true
+
+  models-init:
+    <<: *app
+    profiles: ["init"]
+    command: ["python", "-m", "scripts.download_models"]
+    restart: "no"
+    mem_limit: 4g
+    healthcheck:
+      disable: true
+
+  test:
+    profiles: ["test"]
+    image: gigaam-transcriber-test:${IMAGE_TAG:-latest}
+    build:
+      context: .
+      target: test
+      args:
+        BASE_IMAGE: ${BASE_IMAGE:-nvidia/cuda:12.8.1-cudnn-runtime-ubuntu24.04}
+    working_dir: /app
+    command: ["python", "-m", "pytest", "-q"]
+    environment:
+      ASR_BACKEND: fake
+      DATA_DIR: /tmp/data
+      HF_HOME: /tmp/models
+      LOG_LEVEL: warning
+      PYTHONPATH: /app
+    volumes:
+      - ./tests:/app/tests:ro
+      - ./pyproject.toml:/app/pyproject.toml:ro
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    mem_limit: 2g
+
+volumes:
+  data:
+  models:

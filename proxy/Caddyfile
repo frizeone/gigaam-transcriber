@@ -1,0 +1,29 @@
+{$PROXY_DOMAIN:localhost} {
+	request_body {
+		# 2 ГБ файл + multipart-заголовки
+		max_size 2100MB
+	}
+
+	basic_auth {
+		{$PROXY_USER:admin} {$PROXY_PASSWORD_HASH}
+	}
+
+	header {
+		-Server
+	}
+
+	reverse_proxy web:8000 {
+		# -1 отключает буферизацию: SSE-события уходят сразу.
+		flush_interval -1
+		transport http {
+			dial_timeout 10s
+			read_timeout 3600s
+			write_timeout 3600s
+		}
+	}
+
+	log {
+		output stdout
+		format json
+	}
+}

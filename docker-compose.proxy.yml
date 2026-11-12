@@ -1,0 +1,50 @@
+# Опциональный профиль reverse-proxy на Caddy: TLS, basic auth, SSE.
+# 1) Задайте PROXY_DOMAIN, PROXY_USER и PROXY_PASSWORD_HASH в .env
+#    caddy hash-password --plaintext 'пароль'
+# 2) docker compose -f docker-compose.yml -f docker-compose.proxy.yml --profile proxy up -d
+services:
+  web:
+    ports: !reset []
+    environment:
+      TRUST_PROXY: "true"
+    command:
+      - uvicorn
+      - app.main:app
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
+      - --no-server-header
+      - --no-access-log
+      - --proxy-headers
+      - --forwarded-allow-ips
+      - "*"
+
+  proxy:
+    image: caddy:2.10.2-alpine
+    profiles: ["proxy"]
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      PROXY_DOMAIN: ${PROXY_DOMAIN:-localhost}
+      PROXY_USER: ${PROXY_USER:-admin}
+      PROXY_PASSWORD_HASH: ${PROXY_PASSWORD_HASH:-}
+    volumes:
+      - ./proxy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      web:
+        condition: service_healthy
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  caddy_data:
+  caddy_config:

@@ -1,0 +1,16 @@
+# GPU-override: пробрасывает NVIDIA GPU только воркеру.
+# Запуск: docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d --build
+services:
+  worker:
+    environment:
+      ASR_DEVICE: cuda
+      ASR_QUANT: ${ASR_QUANT:-}
+      NVIDIA_DRIVER_CAPABILITIES: compute,utility
+      NVIDIA_VISIBLE_DEVICES: all
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
