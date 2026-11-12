@@ -16,6 +16,7 @@
 | GPU только у worker | в web нет nvidia-smi/GPU; worker видит CUDA provider |
 | Non-root | `uid=1000(app) gid=1000(app)` |
 | В образе нет весов/тестов/.env/медиа | проверено `find`/`ls` в контейнере |
+| Размер образа | 9.05 ГБ uncompressed; `docker save`-архив со сжатыми слоями — 3.38 ГБ |
 
 ## 2. Реальные файлы
 
