@@ -116,7 +116,7 @@ docker compose exec web nvidia-smi   # должно завершиться ош�
 - `gigaam-v3-e2e-ctc` (fp32 и int8);
 - Silero VAD.
 
-Объём — около 2.2 ГБ. Файл-маркер: `/models/.models_ready.json`. Загрузка защищена file-lock, повторный запуск использует кеш Hugging Face.
+Объём — около 6.2 ГБ (обе модели в fp32 и int8). Файл-маркер: `/models/.models_ready.json`. Загрузка защищена file-lock, повторный запуск использует кеш Hugging Face.
 
 После прогрева можно работать без интернета:
 
@@ -342,6 +342,8 @@ scripts/
   download_models.py
   smoke_test.py
 tests/
+samples/
+  example.docx    # реальный пример результата (не входит в образ)
 Dockerfile
 docker-compose.yml
 docker-compose.gpu.yml
