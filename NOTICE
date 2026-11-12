@@ -1,0 +1,65 @@
+GigaAM Transcriber
+==================
+
+Этот продукт использует следующие компоненты с открытым исходным кодом.
+
+1. GigaAM v3
+   Copyright (c) SberDevices / SaluteDevices
+   Лицензия: MIT
+   https://github.com/salute-developers/GigaAM
+   https://huggingface.co/ai-sage/GigaAM-v3
+
+2. onnx-asr
+   Copyright (c) Istupakov
+   Лицензия: MIT
+   https://github.com/istupakov/onnx-asr
+
+3. Silero VAD
+   Copyright (c) Silero Team
+   Лицензия: MIT
+   https://github.com/snakers4/silero-vad
+
+4. ONNX Runtime
+   Copyright (c) Microsoft Corporation
+   Лицензия: MIT
+   https://github.com/microsoft/onnxruntime
+
+5. FastAPI, Starlette, Uvicorn, Pydantic
+   Copyright (c) их авторы
+   Лицензия: MIT / BSD-3-Clause
+   https://fastapi.tiangolo.com / https://www.starlette.io / https://www.uvicorn.org
+
+6. python-docx
+   Copyright (c) Steve Canny и участники проекта
+   Лицензия: MIT
+   https://github.com/python-openxml/python-docx
+
+7. Swagger UI (self-hosted в app/static/swagger)
+   Copyright (c) SmartBear Software Inc.
+   Лицензия: Apache License 2.0
+   https://github.com/swagger-api/swagger-ui
+   Полный текст лицензии: app/static/swagger/LICENSE
+
+Текст лицензии MIT для перечисленных MIT-компонентов:
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+Модельные веса GigaAM v3 распространяются по лицензии MIT. Веса Silero VAD
+распространяются по лицензии MIT. Веса не включены в образ по умолчанию и
+загружаются один раз в volume models.
